@@ -1,5 +1,6 @@
 import argparse
 import csv
+from pathlib import Path
 from urllib.parse import urljoin, urlparse, unquote
 
 import requests
@@ -70,34 +71,39 @@ def get_links(base_url, extensions=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Retrieves file links from the Internet Archive directory."
+        description="Pobiera linki do plików z katalogu Internet Archive."
     )
 
     parser.add_argument(
         "base_url",
-        help="URL path, np. https://archive.org/download/playstation2_essentials",
+        help="Adres katalogu, np. https://archive.org/download/playstation2_essentials",
     )
 
     parser.add_argument(
         "--ext",
         nargs="+",
-        help="Optional file types, e.g. --ext zip iso bin",
+        help="Opcjonalne rozszerzenia, np. --ext zip iso bin",
     )
 
     args = parser.parse_args()
 
     item_name = get_item_name(args.base_url)
-    output_file = f"{item_name}.csv"
+
+    # Folder list_csv w bieżącej lokalizacji
+    output_dir = Path.cwd() / "list_csv"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_file = output_dir / f"{item_name}.csv"
 
     links = get_links(args.base_url, args.ext)
 
-    with open(output_file, "w", newline="", encoding="utf-8") as file:
+    with output_file.open("w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=["filename", "url"])
         writer.writeheader()
         writer.writerows(links)
 
-    print(f"Found: {len(links)} files")
-    print(f"Saved to: {output_file}")
+    print(f"Znaleziono: {len(links)} plików")
+    print(f"Zapisano do: {output_file}")
 
 
 if __name__ == "__main__":
